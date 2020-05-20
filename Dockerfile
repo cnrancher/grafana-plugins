@@ -1,10 +1,12 @@
-FROM alpine:3.6
+FROM alpine
 
 MAINTAINER Frank Mai <frank@rancher.com>
 
 ARG BUILD_DATE
 ARG VCS_REF
 ARG VERSION
+ARG GRAFANA_PIECHART_PANEL_VERSION=1.5.0
+ARG GRAFANA_IMAGE_RENDERER=v2.0.0
 
 LABEL \
 	io.github.thxcode.build-date=$BUILD_DATE \
@@ -21,13 +23,24 @@ LABEL \
 	io.github.thxcode.docker.dockerfile="/Dockerfile"
 
 RUN apk add --update --no-cache \
-	dumb-init bash sudo \
-	openssl \
-	&& rm -fr /var/cache/apk/* 
+		dumb-init \
+		bash \
+		sudo \
+		openssl \
+	&& 	rm -fr /var/cache/apk/*
 
-RUN mkdir -p /var/lib/grafana/plugins && \
-	wget -q -O /tmp/grafana-piechart-panel.zip https://grafana.com/api/plugins/grafana-piechart-panel/versions/1.2.0/download && \
-	unzip -d /var/lib/grafana/plugins /tmp/grafana-piechart-panel.zip && \
-	rm -fr /tmp/*
+RUN 	mkdir -p /var/lib/grafana-plugins \
+	&&  wget -q -O /tmp/grafana-piechart-panel.zip https://grafana.com/api/plugins/grafana-piechart-panel/versions/${GRAFANA_PIECHART_PANEL_VERSION}/download \
+	&&  unzip -d /var/lib/grafana-plugins /tmp/grafana-piechart-panel.zip
+RUN wget -q -O /tmp/grafana-image-renderer.zip https://github.com/grafana/grafana-image-renderer/releases/download/${GRAFANA_IMAGE_RENDERER}/plugin-linux-x64-glibc-no-chromium.zip \
+	&&  unzip -d /var/lib/grafana-plugins /tmp/grafana-image-renderer.zip \
+	&&  rm -fr /tmp/*
 
-CMD ["/bin/bash"]
+ADD entrypoint.sh /entrypoint.sh
+RUN	chmod +x /entrypoint.sh
+
+WORKDIR /var/lib/grafana
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+# CMD ["/bin/bash"]
