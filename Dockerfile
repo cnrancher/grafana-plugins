@@ -27,13 +27,18 @@ RUN apk add --update --no-cache \
 		bash \
 		sudo \
 		openssl \
-	&& 	rm -fr /var/cache/apk/*
+	&& 	rm -fr /var/cache/apk/* /tmp/*
 
-RUN 	mkdir -p /var/lib/grafana-plugins \
-	&&  wget -q -O /tmp/grafana-piechart-panel.zip https://grafana.com/api/plugins/grafana-piechart-panel/versions/${GRAFANA_PIECHART_PANEL_VERSION}/download \
-	&&  unzip -d /var/lib/grafana-plugins /tmp/grafana-piechart-panel.zip
-RUN wget -q -O /tmp/grafana-image-renderer.zip https://github.com/grafana/grafana-image-renderer/releases/download/${GRAFANA_IMAGE_RENDERER}/plugin-linux-x64-glibc-no-chromium.zip \
-	&&  unzip -d /var/lib/grafana-plugins /tmp/grafana-image-renderer.zip \
+RUN 	mkdir -p /var/lib/grafana-plugins/ /var/lib/grafana/plugins/ \
+	&&	cd /tmp \
+	&&  wget -q -O grafana-piechart-panel.zip https://grafana.com/api/plugins/grafana-piechart-panel/versions/${GRAFANA_PIECHART_PANEL_VERSION}/download \
+	&&  unzip grafana-piechart-panel.zip \
+	&&	rm -rf grafana-piechart-panel.zip \
+	&&	mv `ls`/ /var/lib/grafana-plugins/grafana-piechart-panel/ \
+	&&	wget -q -O grafana-image-renderer.zip https://github.com/grafana/grafana-image-renderer/releases/download/${GRAFANA_IMAGE_RENDERER}/plugin-linux-x64-glibc-no-chromium.zip \
+	&&  unzip grafana-image-renderer.zip \
+	&&	rm -rf grafana-image-renderer.zip \
+	&&	mv `ls`/ /var/lib/grafana-plugins/grafana-image-renderer/ \
 	&&  rm -fr /tmp/*
 
 ADD entrypoint.sh /entrypoint.sh
@@ -42,5 +47,3 @@ RUN	chmod +x /entrypoint.sh
 WORKDIR /var/lib/grafana
 
 ENTRYPOINT ["/entrypoint.sh"]
-
-# CMD ["/bin/bash"]
